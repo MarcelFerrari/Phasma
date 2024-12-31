@@ -32,21 +32,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"
 
-// Eigen built-in direct solvers
-#include <Eigen/SparseLU>
-#include <Eigen/SparseQR>
-
-// Pardiso
-#ifdef PHASMA_PARDISO_SUPPORT
-#include <Eigen/PardisoSupport>
-#endif
-
-// SuiteSparse
-#ifdef PHASMA_SUITESPARSE_SUPPORT
-#include <Eigen/UmfPackSupport>
-#include <Eigen/KLUSupport>
-#endif
-
 namespace nb = nanobind;
 using namespace nb::literals;
 
