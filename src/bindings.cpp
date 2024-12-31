@@ -16,13 +16,15 @@ See LICENSE file in the project root for full license information.
 #include <Eigen/Core>
 #include <Eigen/Sparse>
 
-#include "phasma/sparse_matrix.hpp"
-#include "phasma/direct_solvers.hpp"
+#include "phasma/bindings/bindings.hpp"
 
 NB_MODULE(phasma, m) {
     // Initialize Sparse Matrix module
-    Phasma::init_sparse_matrix_module(m);
+    Phasma::bindings::init_sparse_matrix_module(m);
+
+    // Init Scaler module
+    Phasma::bindings::init_scaler_module(m);
 
     // Initialize direct solvers module
-    Phasma::init_direct_solver_module(m);
+    Phasma::bindings::init_direct_solver_module(m);
 }

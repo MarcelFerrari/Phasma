@@ -31,9 +31,8 @@ See LICENSE file in the project root for full license information.
 #include <optional>
 
 // Phasma
-#include "phasma/utils.hpp"
 #include "phasma/types.hpp"
-#include "phasma/sparse_matrix.hpp"
+#include "phasma/scaler.hpp"
 
 // Eigen 3 built-in direct solvers
 #include <Eigen/SparseLU>
@@ -55,25 +54,24 @@ using namespace nb::literals;
 
 namespace Phasma {
 
-template <typename Solver, typename Scalar>
-class DirectSolver {
+template <typename Solver, typename Scalar, int Order = Eigen::ColMajor>
+class ScaledDirectSolver {
     /*
         Wrapper class for direct solvers that follow the Eigen 3 sparse solver API.
         This class handles matrix scaling without having to reimplement it for each solver.
     */
 public:
-    using CCSSpMat = Phasma::SparseMatrix<Scalar, Eigen::ColMajor>;
-    using CRSSpMat = Phasma::SparseMatrix<Scalar, Eigen::RowMajor>;
+    using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
     using Vector = Phasma::Vector<Scalar>;
 
-    DirectSolver() : solver_() {};
+    ScaledDirectSolver(Phasma::ScalingType t = Phasma::ScalingType::NONE) : solver_(), scaler_(t) {};
 
-    void analyze_pattern(const CCSSpMat& A) {
+    void analyze_pattern(const SparseMatrix& A) {
         solver_.analyzePattern(A);
         pattern_analyzed_ = true;
     }
 
-    void factorize(const CCSSpMat& A, const std::string & scale_matrix = "none") {
+    void factorize(const SparseMatrix& A) {
         if (!pattern_analyzed_) {
             std::cout << "DirectSolver: Warning: symbolic factorization has not been performed." << std::endl;
             std::cout << "DirectSolver: Performing symbolic factorization now." << std::endl;
@@ -81,26 +79,9 @@ public:
             analyze_pattern(A);
         }
 
-        if (scale_matrix != "none") {
-            if (scale_matrix != "full" && scale_matrix != "row" && scale_matrix != "col") {
-                throw std::runtime_error("DirectSolver: Invalid scaling option. Use 'none', 'full', 'row' or 'col'.");
-            }
-                if(scale_matrix == "full") {
-                    CRSSpMat A_crs = A;
-                    Dr_inv_ = compute_inverse_row_norms(A_crs);
-                    Dc_inv_ = compute_inverse_col_norms(A);
-                    CCSSpMat A_scaled = (Dr_inv_->asDiagonal() * A * Dc_inv_->asDiagonal()).eval();
-                    solver_.factorize(A_scaled);
-                } else if(scale_matrix == "row") {
-                    CRSSpMat A_crs = A;
-                    Dr_inv_ = compute_inverse_row_norms(A_crs);
-                    CCSSpMat A_scaled = (Dr_inv_->asDiagonal() * A).eval();
-                    solver_.factorize(A_scaled);
-                } else if(scale_matrix == "col") {
-                    Dc_inv_ = compute_inverse_col_norms(A);
-                    CCSSpMat A_scaled = (A * Dc_inv_->asDiagonal()).eval();
-                    solver_.factorize(A_scaled);
-                }
+        if(scaler_.type() != Phasma::ScalingType::NONE) {
+            SparseMatrix A_scaled = scaler_.scale(A);
+            solver_.factorize(A_scaled);
         } else {
             solver_.factorize(A);
         }
@@ -109,13 +90,12 @@ public:
             throw std::runtime_error("DirectSolver: Numerical factorization failed.");
         }
 
-        scale_ = scale_matrix;
         factorized_ = true;
     }
 
-    void compute(const CCSSpMat& A, const std::string & scale_matrix = "none") {
+    void compute(const SparseMatrix& A) {
         analyze_pattern(A);
-        factorize(A, scale_matrix);
+        factorize(A);
     }
 
     Vector solve(const Vector& b) const {
@@ -124,57 +104,52 @@ public:
         }
 
         Vector x;
-        if (scale_ != "none") {
-            if(scale_ == "full"){
-                Vector b_scaled = Dr_inv_->cwiseProduct(b);
-                x = solver_.solve(b_scaled);
-                x = (Dc_inv_->cwiseProduct(x)).eval();
-            } else if (scale_ == "row") {
-                Vector b_scaled = Dr_inv_->cwiseProduct(b);
-                x = solver_.solve(b_scaled);
-            } else if (scale_ == "col") {
-                x = solver_.solve(b);
-                x = (Dc_inv_->cwiseProduct(x)).eval();
-            } else {
-                throw std::runtime_error("DirectSolver: Invalid scaling option. Use 'none', 'full', 'row' or 'col'.");
-            }
+        // Scale input vector and solve if necessary
+        if (scaler_.type() == Phasma::ScalingType::FULL || scaler_.type() == Phasma::ScalingType::ROW) {
+            Vector b_scaled = scaler_.scale(b);
+            x = solver_.solve(b_scaled);
         } else {
             x = solver_.solve(b);
         }
 
+        // Check if the solver failed
         if (solver_.info() != Eigen::Success) {
             throw std::runtime_error("DirectSolver: Solving failed.");
         }
 
-        return x;
+        // Unscale the solution if necessary
+        if (scaler_.type() == Phasma::ScalingType::FULL || scaler_.type() == Phasma::ScalingType::COL) {
+            return scaler_.unscale(x);
+        } else {
+            return x;
+        }
     }
 
-    Vector factorize_and_solve(const CCSSpMat& A, const Vector& b, const std::string & scale_matrix = "col") {
-        compute(A, scale_matrix);
+    Vector factorize_and_solve(const SparseMatrix& A, const Vector& b) {
+        compute(A);
         return solve(b);
     }
 
 private:
     Solver solver_;
+    Phasma::Scaler<Scalar> scaler_;
     bool pattern_analyzed_ = false;
-    bool factorized_ = false;
-    std::string scale_ = "none";
-    std::optional<Vector> Dr_inv_; // Row scaling factors
-    std::optional<Vector> Dc_inv_; // Column scaling factors
+    bool factorized_ = false;    
 };
 
 template <typename Solver, typename Scalar, int Order = Eigen::ColMajor>
 void bind_sparse_solver(nb::module_& m, const std::string& class_name) {
-    using SparseMatrix = Eigen::SparseMatrix<Scalar, Order, Phasma::Index>;
-    using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+    using ScaledDirectSolver = Phasma::ScaledDirectSolver<Solver, Scalar, Order>;
+    using SparseMatrix = typename ScaledDirectSolver::SparseMatrix;
+    using Vector = typename ScaledDirectSolver::Vector;
 
-    nb::class_<DirectSolver<Solver, Scalar>>(m, class_name.c_str())
-        .def(nb::init<>(), "Default constructor")
-        .def("analyze_pattern", &DirectSolver<Solver, Scalar>::analyze_pattern, "A"_a, "Analyze the sparsity pattern of the matrix A.")
-        .def("factorize", &DirectSolver<Solver, Scalar>::factorize, "A"_a, "scale_matrix"_a = "none", "Factorize the matrix A.")
-        .def("compute", &DirectSolver<Solver, Scalar>::compute, "A"_a, "scale_matrix"_a = "none", "Analyze the sparsity pattern and factorize the matrix A.")
-        .def("solve", &DirectSolver<Solver, Scalar>::solve, "b"_a, "Solve the linear system Ax = b.")
-        .def("solve", &DirectSolver<Solver, Scalar>::factorize_and_solve, "A"_a, "b"_a, "scale_matrix"_a = "col", "Factorize the matrix A and solve the linear system Ax = b.");
+    nb::class_<ScaledDirectSolver>(m, class_name.c_str())
+        .def(nb::init<Phasma::ScalingType>(), "type"_a = Phasma::ScalingType::NONE, "Create a DirectSolver object with the given scaling type.")
+        .def("analyze_pattern", &ScaledDirectSolver::analyze_pattern, "A"_a, "Analyze the sparsity pattern of the matrix A.")
+        .def("factorize", &ScaledDirectSolver::factorize, "A"_a, "Factorize the matrix A.")
+        .def("compute", &ScaledDirectSolver::compute, "A"_a, "Analyze the sparsity pattern and factorize the matrix A.")
+        .def("solve", &ScaledDirectSolver::solve, "b"_a, "Solve the linear system Ax = b.")
+        .def("solve", &ScaledDirectSolver::factorize_and_solve, "A"_a, "b"_a, "Factorize the matrix A and solve the linear system Ax = b.");
 }
 
 void init_direct_solver_module(nb::module_& m) {
@@ -204,4 +179,4 @@ void init_direct_solver_module(nb::module_& m) {
 
 } // namespace Phasma
 
-#endif // PHADMA_LINEAR_SOLVER_WRAPPER_HPP
+#endif // PHASMA_LINEAR_SOLVER_WRAPPER_HPP

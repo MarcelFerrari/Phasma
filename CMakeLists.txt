@@ -35,6 +35,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # Add the phasma module
 nanobind_add_module(phasma NOMINSIZE 
  src/bindings.cpp
+ src/sparse_matrix_module.cpp
+ src/scaler_module.cpp
+ src/direct_solver_module.cpp
 )
 
 option(PHASMA_USE_64_BIT_INDEX "Use 64-bit index type." OFF)

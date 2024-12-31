@@ -11,8 +11,8 @@ Copyright (c) 2024 Marcel Ferrari. All rights reserved.
 See LICENSE file in the project root for full license information.
 */
 
-#ifndef PHASMA_SPARSE_MATRIX_HPP
-#define PHASMA_SPARSE_MATRIX_HPP
+#ifndef PHASMA_SPARSE_MATRIX_MODULE_HPP
+#define PHASMA_SPARSE_MATRIX_MODULE_HPP
 
 // Nanobind
 #include <nanobind/nanobind.h>
@@ -22,17 +22,73 @@ See LICENSE file in the project root for full license information.
 
 #include <Eigen/Sparse>
 #include <string>
-#include <iostream>
 
 // Phasma
-#include "phasma/utils.hpp"
 #include "phasma/types.hpp"
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
-namespace Phasma {
+namespace Phasma::bindings {
 
+/*
+Iterator class used to construct a sparse matrix from a vector representation
+of a COO matrix instead of using a std::vector of Eigen triplets.
+This is faster and easier to use than the Eigen triplet interface.
+*/
+
+template <typename Scalar>
+class ArrayTripletIterator {
+    using IndexArray = nb::DRef<Eigen::Array<Phasma::Index, Eigen::Dynamic, 1>>;
+    using ScalarArray = nb::DRef<Eigen::Array<Scalar, Eigen::Dynamic, 1>>;
+
+    IndexArray rows_;
+    IndexArray cols_;
+    ScalarArray values_;
+    Phasma::Index index_;
+
+public:
+    ArrayTripletIterator(IndexArray rows,
+                         IndexArray cols,
+                         ScalarArray values, Phasma::Index index = 0)
+        : rows_(rows), cols_(cols), values_(values), index_(index) {}
+
+    Phasma::Index row() const { return rows_[index_]; }
+    Phasma::Index col() const { return cols_[index_]; }
+    Scalar value() const { return values_[index_]; }
+
+    ArrayTripletIterator& operator++() {
+        ++index_;
+        return *this;
+    }
+
+    bool operator!=(const ArrayTripletIterator& other) const { return index_ != other.index_; }
+
+    // Pointer-like interface for Eigen compatibility
+    const ArrayTripletIterator* operator->() const { return this; }
+};
+
+
+// Set a sparse matrix from arrays of triplets in COO format
+template <typename Scalar, int Order>
+void set_from_coo_arrays(Phasma::SparseMatrix<Scalar, Order> &mat,
+                        nb::DRef<Phasma::Array<Phasma::Index>> idx_i,
+                        nb::DRef<Phasma::Array<Phasma::Index>> idx_j,
+                        nb::DRef<Phasma::Array<Scalar>> values){
+
+    // Determine matrix size
+    Phasma::Index rows = idx_i.maxCoeff() + 1;
+    Phasma::Index cols = idx_j.maxCoeff() + 1;
+
+    // Create ArrayTripletIterator object
+    ArrayTripletIterator<Scalar> begin(idx_i, idx_j, values);
+    ArrayTripletIterator<Scalar> end(idx_i, idx_j, values, values.rows());
+
+    // Set the matrix from triplets
+    mat.resize(rows, cols);
+    mat.setFromTriplets(begin, end);
+}
+                         
 template <typename Scalar, int Order>
 void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
     using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
@@ -49,24 +105,9 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         .def_prop_ro("is_compressed", &SparseMatrix::isCompressed, "Check if the matrix is compressed")
 
         // ====================== Member functions ======================
-        .def("set_from_triplets", [](SparseMatrix &self,
-                                     nb::DRef<Phasma::Array<Phasma::Index>> idx_i,
-                                     nb::DRef<Phasma::Array<Phasma::Index>> idx_j,
-                                     nb::DRef<Phasma::Array<Scalar>> values) -> void {
-            
-            // Determine matrix size
-            Phasma::Index rows = idx_i.maxCoeff() + 1;
-            Phasma::Index cols = idx_j.maxCoeff() + 1;
-
-            // Create ArrayTripletIterator object
-            ArrayTripletIterator<Scalar> begin(idx_i, idx_j, values);
-            ArrayTripletIterator<Scalar> end(idx_i, idx_j, values, values.rows());
-
-            // Set the matrix from triplets
-            self.resize(rows, cols);
-            self.setFromTriplets(begin, end);
-        }, "idx_i"_a, "idx_j"_a, "values"_a,
-           "Set the matrix from arrays of triplets idx_i, idx_j, values in COO format.")
+        .def("setFromTriplets", &set_from_coo_arrays<Scalar, Order>,
+             "idx_i"_a, "idx_j"_a, "values"_a,
+             "Set the matrix from arrays of triplets idx_i, idx_j, values in COO format.")
 
         // Operators
         .def("__repr__", [](const SparseMatrix &self) -> std::string {
@@ -160,6 +201,10 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
             return self.cwiseProduct(m);
         }, "m"_a, "Element-wise product of a sparse matrix and a dense matrix.")
 
+        // -------- Unary minus --------
+        .def("__neg__", [](const SparseMatrix &self) -> SparseMatrix {
+            return -self;
+        }, nb::is_operator())
         // -------- Division --------
         // SparseMatrix / Scalar
         .def("__truediv__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
@@ -167,15 +212,34 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         }, nb::is_operator())
         .def("__rtruediv__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
             return self / s;
-        }, nb::is_operator())        
+        }, nb::is_operator())
+        
+        // ====================== Other operations ======================
+        // Triangular solve
+        .def("triangular_solve", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const std::string & uplo) -> Phasma::Vector<Scalar> {
+            if (uplo == "U") {
+                return self.template triangularView<Eigen::Upper>().solve(b);
+            } else if (uplo == "L") {
+                return self.template triangularView<Eigen::Lower>().solve(b);
+            } else {
+                throw std::invalid_argument("Invalid value for 'uplo'. Use 'U' or 'L'.");
+            }
+        }, "b"_a, "lower"_a = true, "Solve the triangular system Ax = b.")
+
+        .def("triangular_prod", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const std::string & uplo) -> Phasma::Vector<Scalar> {
+            if (uplo == "U") {
+                return self.template triangularView<Eigen::Upper>()*b;
+            } else if (uplo == "L") {
+                return self.template triangularView<Eigen::Lower>()*b;
+            } else if (uplo == "SU") {
+                return self.template triangularView<Eigen::StrictlyUpper>()*b;
+            } else if (uplo == "SL") {
+                return self.template triangularView<Eigen::StrictlyLower>()*b;
+            } else {
+                throw std::invalid_argument("Invalid value for 'uplo'. Use 'U', 'L', 'SU' or 'SL'.");
+            }
+        }, "b"_a, "lower"_a = true, "Multiply the triangular matrix by a vector.")
 ;}
 
-void init_sparse_matrix_module(nb::module_ & m){
-    bind_sparse_matrix<double, Eigen::ColMajor>(m, "CCSDSpmat");
-    bind_sparse_matrix<double, Eigen::RowMajor>(m, "CRSDSpmat");
-    bind_sparse_matrix<float,  Eigen::ColMajor>(m, "CCSFSpmat");
-    bind_sparse_matrix<float,  Eigen::RowMajor>(m, "CRSFSpmat");
-}
-    
 } // namespace Phasma
-#endif // PHASMA_SPARSE_MATRIX_HPP
+#endif // PHASMA_SPARSE_MATRIX_MODULE_HPP
