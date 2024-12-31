@@ -2,9 +2,9 @@
 Phasma: fast sparse linear algebra for Python.
 https://github.com/MarcelFerrari/phasma
 
-File: linear_solver_wrapper.hpp
-Description: Wrapper that exposes bindings for linear solver classes following
-the Eigen 3 sparse solver API. This class handles matrix scaling.
+File: scaled_direct_solver.hpp
+Description: Wrapper that exposes bindings for direct solver classes following
+the Eigen 3 sparse solver API. This class handles matrix scaling automatically.
 
 Author: Marcel Ferrari
 Copyright (c) 2024 Marcel Ferrari. All rights reserved.
