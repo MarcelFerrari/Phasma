@@ -32,8 +32,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"
 
-namespace nb = nanobind;
-using namespace nb::literals;
 
 namespace Phasma {
 
