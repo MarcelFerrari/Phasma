@@ -29,27 +29,6 @@ namespace Phasma {
     using Index = int;
 #endif
 
-// Define aliases for Phasma types based on Eigen
-template <typename Scalar>
-using Array = Eigen::Array<Scalar, Eigen::Dynamic, 1>;
-
-template <typename Scalar>
-using Vector = Eigen::Vector<Scalar, Eigen::Dynamic>;
-
-template <typename Scalar>
-using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
-
-template <typename Scalar>
-using SparseVector = Eigen::SparseVector<Scalar, Eigen::ColMajor, Phasma::Index>;
-
-template <typename Scalar, int Order = Eigen::ColMajor>
-using SparseMatrix = Eigen::SparseMatrix<Scalar, Order, Phasma::Index>;
-
-template <typename Scalar>
-using CRSMatrix = Phasma::SparseMatrix<Scalar, Eigen::RowMajor>;
-
-template <typename Scalar>
-using CCSMatrix = Phasma::SparseMatrix<Scalar, Eigen::ColMajor>;
 
 // Enum classes for Phasma types
 enum Order {
@@ -70,6 +49,28 @@ enum class ScalingType {
     Col,
     Full,
 };
+
+// Define aliases for Phasma types based on Eigen
+template <typename Scalar>
+using Array = Eigen::Array<Scalar, Eigen::Dynamic, 1>;
+
+template <typename Scalar>
+using Vector = Eigen::Vector<Scalar, Eigen::Dynamic>;
+
+template <typename Scalar>
+using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
+
+template <typename Scalar>
+using SparseVector = Eigen::SparseVector<Scalar, Phasma::ColMajor, Phasma::Index>;
+
+template <typename Scalar, int Order = Phasma::ColMajor>
+using SparseMatrix = Eigen::SparseMatrix<Scalar, Order, Phasma::Index>;
+
+template <typename Scalar>
+using CRSMatrix = Phasma::SparseMatrix<Scalar, Phasma::RowMajor>;
+
+template <typename Scalar>
+using CCSMatrix = Phasma::SparseMatrix<Scalar, Phasma::ColMajor>;
 
 } // namespace Phasma
 

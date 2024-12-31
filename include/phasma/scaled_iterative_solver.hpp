@@ -38,7 +38,12 @@ public:
     using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
     using Vector = Phasma::Vector<Scalar>;
 
-    ScaledIterativeSolver(Phasma::ScalingType t = Phasma::ScalingType::None) : solver_(), scaler_(t) {};
+    ScaledIterativeSolver(Phasma::ScalingType t = Phasma::ScalingType::None,
+                          bool check_convergence = False)
+    : solver_(),
+      scaler_(t), 
+      check_convergence_(check_convergence)
+    {};
 
     void set_tolerance(double tol) {
         solver_.setTolerance(tol);
@@ -111,6 +116,7 @@ private:
     IterativeSolver solver_;
     Phasma::Scaler<Scalar> scaler_;
     bool matrix_initialized_ = false;
+    const bool check_convergence_;
 };
 
 } // namespace Phasma

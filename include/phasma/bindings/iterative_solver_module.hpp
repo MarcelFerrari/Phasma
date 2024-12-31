@@ -36,7 +36,7 @@ using namespace nb::literals;
 
 namespace Phasma::bindings {
 
-template <typename Solver, typename Scalar, int Order = Eigen::ColMajor>
+template <typename Solver, typename Scalar, int Order = Phasma::RowMajor>
 void bind_iterative_solver(nb::module_& m, const std::string& class_name) {
     using ScaledIterativeSolver = Phasma::ScaledIterativeSolver<Solver, Scalar, Order>;
     using SparseMatrix = typename ScaledIterativeSolver::SparseMatrix;
