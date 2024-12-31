@@ -26,8 +26,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // Phasma
 #include "phasma/types.hpp"
 
-namespace nb = nanobind;
-
 namespace Phasma {
 
 enum class ScalingType {
