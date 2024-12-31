@@ -16,12 +16,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #ifndef PHASMA_SCALER_HPP
 #define PHASMA_SCALER_HPP
 
-// Eigen
-#include <Eigen/Sparse>
-#include <string>
-
 // C++ Standard Library
 #include <optional>
+#include <string>
 
 // Phasma
 #include "phasma/types.hpp"

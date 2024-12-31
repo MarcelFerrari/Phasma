@@ -17,11 +17,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #ifndef PHASMA_DIRECT_SOLVER_HPP
 #define PHASMA_DIRECT_SOLVER_HPP
 
-// Nanobind
-#include <nanobind/nanobind.h>
-#include <nanobind/eigen/dense.h>
-#include <nanobind/stl/string.h>
-
 // Eigen
 #include <Eigen/Core>
 #include <Eigen/Sparse>
@@ -29,8 +24,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 // C++ Standard Library
 #include <string>
-#include <iostream>
-#include <optional>
 
 // Phasma
 #include "phasma/types.hpp"
@@ -138,46 +131,6 @@ private:
     bool pattern_analyzed_ = false;
     bool factorized_ = false;    
 };
-
-template <typename Solver, typename Scalar, int Order = Eigen::ColMajor>
-void bind_sparse_solver(nb::module_& m, const std::string& class_name) {
-    using ScaledDirectSolver = Phasma::ScaledDirectSolver<Solver, Scalar, Order>;
-    using SparseMatrix = typename ScaledDirectSolver::SparseMatrix;
-    using Vector = typename ScaledDirectSolver::Vector;
-
-    nb::class_<ScaledDirectSolver>(m, class_name.c_str())
-        .def(nb::init<Phasma::ScalingType>(), "type"_a = Phasma::ScalingType::NONE, "Create a DirectSolver object with the given scaling type.")
-        .def("analyze_pattern", &ScaledDirectSolver::analyze_pattern, "A"_a, "Analyze the sparsity pattern of the matrix A.")
-        .def("factorize", &ScaledDirectSolver::factorize, "A"_a, "Factorize the matrix A.")
-        .def("compute", &ScaledDirectSolver::compute, "A"_a, "Analyze the sparsity pattern and factorize the matrix A.")
-        .def("solve", &ScaledDirectSolver::solve, "b"_a, "Solve the linear system Ax = b.")
-        .def("solve", &ScaledDirectSolver::factorize_and_solve, "A"_a, "b"_a, "Factorize the matrix A and solve the linear system Ax = b.");
-}
-
-void init_direct_solver_module(nb::module_& m) {
-    // Initialize Eigen 3 direct solvers
-    // Most use ColMajor format so we create a convenient alias
-    using SparseMatrix = Phasma::SparseMatrix<double>;
-
-    // SparseLU
-    Phasma::bind_sparse_solver<Eigen::SparseLU<SparseMatrix>, double>(m, "SparseLU");
-
-    // SparseQR
-    Phasma::bind_sparse_solver<Eigen::SparseQR<SparseMatrix, Eigen::COLAMDOrdering<Phasma::Index>>, double>(m, "SparseQR");
-    
-    // PardisoLU
-    #ifdef PHASMA_PARDISO_SUPPORT
-    #pragma message("Pardiso support is enabled.")
-    Phasma::bind_sparse_solver<Eigen::PardisoLU<SparseMatrix>, double>(m, "PardisoLU");
-    #endif
-
-    // SuiteSparse
-    #ifdef PHASMA_SUITESPARSE_SUPPORT
-    #pragma message("SuiteSparse support is enabled.")
-    Phasma::bind_sparse_solver<Eigen::UmfPackLU<SparseMatrix>, double>(m, "UmfPackLU");
-    Phasma::bind_sparse_solver<Eigen::KLU<SparseMatrix>, double>(m, "KLU");
-    #endif
-}
 
 } // namespace Phasma
 
