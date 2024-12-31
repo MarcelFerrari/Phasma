@@ -43,7 +43,7 @@ void bind_iterative_solver(nb::module_& m, const std::string& class_name) {
     using Vector = typename ScaledIterativeSolver::Vector;
 
     nb::class_<ScaledIterativeSolver>(m, class_name.c_str())
-        .def(nb::init<Phasma::ScalingType>(), "type"_a = Phasma::ScalingType::None, "Create an IterativeSolver object with the given scaling type.")
+        .def(nb::init<Phasma::ScalingType, bool>(), "type"_a = Phasma::ScalingType::None, "check_convergence"_a = false, "Create an IterativeSolver object with the given scaling type.")
         .def("set_tolerance", &ScaledIterativeSolver::set_tolerance, "tol"_a, "Set the tolerance for the iterative solver.")
         .def("set_max_iterations", &ScaledIterativeSolver::set_max_iterations, "max_iter"_a, "Set the maximum number of iterations.")
         .def("tolerance", &ScaledIterativeSolver::tolerance, "Get the tolerance of the solver.")

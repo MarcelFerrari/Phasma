@@ -39,7 +39,7 @@ public:
     using Vector = Phasma::Vector<Scalar>;
 
     ScaledIterativeSolver(Phasma::ScalingType t = Phasma::ScalingType::None,
-                          bool check_convergence = False)
+                          bool check_convergence = false)
     : solver_(),
       scaler_(t), 
       check_convergence_(check_convergence)
@@ -95,7 +95,7 @@ public:
         }
 
         // Check if the solver failed
-        if (solver_.info() != Eigen::Success) {
+        if (check_convergence_ && solver_.info() != Eigen::Success) {
             throw std::runtime_error("IterativeSolver: Solving failed.");
         }
 
