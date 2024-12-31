@@ -22,9 +22,11 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 namespace nb = nanobind;
 
 namespace Phasma::bindings {
+    void init_types_module(nb::module_ & m);
     void init_sparse_matrix_module(nb::module_ &m);
     void init_scaler_module(nb::module_ &m);
     void init_direct_solver_module(nb::module_ &m);
+    void init_iterative_solver_module(nb::module_ &m);
 }
 
 #endif // PHASMA_BINDINGS_HPP

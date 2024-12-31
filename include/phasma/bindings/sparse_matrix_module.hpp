@@ -221,30 +221,30 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         }, nb::is_operator())
         
         // ====================== Other operations ======================
-        // Triangular solve
-        .def("triangular_solve", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
-            if (view == Phasma::Upper) {
-                return self.template triangularView<Phasma::Upper>().solve(b);
-            } else if (view == Phasma::Lower) {
-                return self.template triangularView<Phasma::Lower>().solve(b);
-            } else {
-                throw std::invalid_argument("Invalid value for 'view'. Use 'Upper' or 'Lower'.");
-            }
-        }, "b"_a, "view"_a, "Solve a triangular system of equations.")
+        // // Triangular solve
+        // .def("triangular_solve", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
+        //     if (view == Phasma::Upper) {
+        //         return self.template triangularView<Phasma::Upper>().solve(b);
+        //     } else if (view == Phasma::Lower) {
+        //         return self.template triangularView<Phasma::Lower>().solve(b);
+        //     } else {
+        //         throw std::invalid_argument("Invalid value for 'view'. Use 'Upper' or 'Lower'.");
+        //     }
+        // }, "b"_a, "view"_a, "Solve a triangular system of equations.")
 
-        .def("triangular_prod", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
-            if (view == Phasma::Upper) {
-                return self.template triangularView<Phasma::Upper>()*b;
-            } else if (view == Phasma::Lower) {
-                return self.template triangularView<Phasma::Lower>()*b;
-            } else if (view == Phasma::StrictlyUpper) {
-                return self.template triangularView<Phasma::StrictlyUpper>()*b;
-            } else if (view == Phasma::StrictlyLower) {
-                return self.template triangularView<Phasma::StrictlyLower>()*b;
-            } else {
-                throw std::invalid_argument("Invalid value for 'view'. Use 'Upper', 'Lower', 'StrictlyUpper' or 'StrictlyLower'.");
-            }
-        }, "b"_a, "view"_a, "Perform a triangular matrix-vector product.")
+        // .def("triangular_prod", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
+        //     if (view == Phasma::Upper) {
+        //         return self.template triangularView<Phasma::Upper>()*b;
+        //     } else if (view == Phasma::Lower) {
+        //         return self.template triangularView<Phasma::Lower>()*b;
+        //     } else if (view == Phasma::StrictlyUpper) {
+        //         return self.template triangularView<Phasma::StrictlyUpper>()*b;
+        //     } else if (view == Phasma::StrictlyLower) {
+        //         return self.template triangularView<Phasma::StrictlyLower>()*b;
+        //     } else {
+        //         throw std::invalid_argument("Invalid value for 'view'. Use 'Upper', 'Lower', 'StrictlyUpper' or 'StrictlyLower'.");
+        //     }
+        // }, "b"_a, "view"_a, "Perform a triangular matrix-vector product.")
 ;}
 
 } // namespace Phasma

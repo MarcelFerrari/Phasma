@@ -45,6 +45,12 @@ using SparseVector = Eigen::SparseVector<Scalar, Eigen::ColMajor, Phasma::Index>
 template <typename Scalar, int Order = Eigen::ColMajor>
 using SparseMatrix = Eigen::SparseMatrix<Scalar, Order, Phasma::Index>;
 
+template <typename Scalar>
+using CRSMatrix = Phasma::SparseMatrix<Scalar, Eigen::RowMajor>;
+
+template <typename Scalar>
+using CCSMatrix = Phasma::SparseMatrix<Scalar, Eigen::ColMajor>;
+
 // Enum classes for Phasma types
 enum Order {
     ColMajor = Eigen::ColMajor,

@@ -19,32 +19,14 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // Nanobind
 #include <nanobind/nanobind.h>
 #include <nanobind/eigen/dense.h>
-#include <nanobind/stl/string.h>
 
-// Eigen
-#include <Eigen/Core>
-#include <Eigen/Sparse>
-#include <Eigen/OrderingMethods>
+// Standard Library
+#include <string>
 
 // Phasma
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"
 #include "phasma/scaled_direct_solver.hpp"
-
-// Eigen 3 built-in direct solvers
-#include <Eigen/SparseLU>
-#include <Eigen/SparseQR>
-
-// Pardiso
-#ifdef PHASMA_PARDISO_SUPPORT
-#include <Eigen/PardisoSupport>
-#endif
-
-// SuiteSparse
-#ifdef PHASMA_SUITESPARSE_SUPPORT
-#include <Eigen/UmfPackSupport>
-#include <Eigen/KLUSupport>
-#endif
 
 namespace nb = nanobind;
 using namespace nb::literals;

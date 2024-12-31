@@ -21,6 +21,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include "phasma/bindings/bindings.hpp"
 
 NB_MODULE(phasma, m) {
+    // Initialize Types module
+    Phasma::bindings::init_types_module(m);
+
     // Initialize Sparse Matrix module
     Phasma::bindings::init_sparse_matrix_module(m);
 
@@ -29,4 +32,7 @@ NB_MODULE(phasma, m) {
 
     // Initialize direct solvers module
     Phasma::bindings::init_direct_solver_module(m);
+
+    // Initialize iterative solvers module
+    Phasma::bindings::init_iterative_solver_module(m);
 }

@@ -26,6 +26,21 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include "phasma/types.hpp"
 #include "phasma/bindings/direct_solver_module.hpp"
 
+// Eigen 3 built-in direct solvers
+#include <Eigen/SparseLU>
+#include <Eigen/SparseQR>
+
+// Pardiso
+#ifdef PHASMA_PARDISO_SUPPORT
+#include <Eigen/PardisoSupport>
+#endif
+
+// SuiteSparse
+#ifdef PHASMA_SUITESPARSE_SUPPORT
+#include <Eigen/UmfPackSupport>
+#include <Eigen/KLUSupport>
+#endif
+
 namespace nb = nanobind;
 namespace Phasma::bindings{
 void init_direct_solver_module(nb::module_& m) {
