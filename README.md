@@ -56,7 +56,7 @@ A = ph.CCSMatrix(i_idx, j_idx, vals)
 
 # Perform LU factorization using Eigen's SparseLU
 # Use full column/row scaling as preconditioning strategy
-solver = ph.SparseLU(ph.ScalingType.FULL)
+solver = ph.SparseLU(ph.ScalingType.Full)
 solver.compute(A)
 
 # Solve sparse linear system

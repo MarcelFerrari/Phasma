@@ -18,25 +18,17 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 // C++ Standard Library
 #include <optional>
-#include <string>
 
 // Phasma
 #include "phasma/types.hpp"
 
 namespace Phasma {
 
-enum class ScalingType {
-    NONE,
-    ROW,
-    COL,
-    FULL,
-};
-
 template <typename Scalar>
 class Scaler {
 public:
-    using CCSMatrix = Phasma::SparseMatrix<Scalar, Eigen::ColMajor>;
-    using CRSMatrix = Phasma::SparseMatrix<Scalar, Eigen::RowMajor>;
+    using CCSMatrix = Phasma::SparseMatrix<Scalar, Phasma::ColMajor>;
+    using CRSMatrix = Phasma::SparseMatrix<Scalar, Phasma::RowMajor>;
     using Vector = Phasma::Vector<Scalar>;
 
     Scaler(ScalingType t) : type_(t) {}
@@ -44,54 +36,54 @@ public:
     const ScalingType & type() const { return type_; }
 
     CCSMatrix scale_ccs(const CCSMatrix& A_ccs) {
-        if(type_ == ScalingType::FULL) {
+        if(type_ == ScalingType::Full) {
             CRSMatrix A_crs = A_ccs;
             return scale_full_ccs(A_ccs, A_crs);
-        } else if (type_ == ScalingType::ROW) {
+        } else if (type_ == ScalingType::Row) {
             CRSMatrix A_crs = A_ccs;
             return scale_row_ccs(A_ccs, A_crs);
-        } else if (type_ == ScalingType::COL) {
+        } else if (type_ == ScalingType::Col) {
             return scale_col_ccs(A_ccs);
         } else {
-            throw std::runtime_error("Scaler: Error attempting to scale matrix. Scaling type is 'NONE'.");
+            throw std::runtime_error("Scaler: Error attempting to scale matrix. Scaling type is 'None'.");
         }
     }
 
     CRSMatrix scale_crs(const CRSMatrix& A_crs) {
-        if(type_ == ScalingType::FULL) {
+        if(type_ == ScalingType::Full) {
             CCSMatrix A_ccs = A_crs;
             return scale_full_crs(A_ccs, A_crs);
-        } else if (type_ == ScalingType::ROW) {
+        } else if (type_ == ScalingType::Row) {
             return scale_row_crs(A_crs);
-        } else if (type_ == ScalingType::COL) {
+        } else if (type_ == ScalingType::Col) {
             CCSMatrix A_ccs = A_crs;
             return scale_col_crs(A_ccs, A_crs);
         } else {
-            throw std::runtime_error("Scaler: Error attempting to scale matrix. Scaling type is 'NONE'.");
+            throw std::runtime_error("Scaler: Error attempting to scale matrix. Scaling type is 'None'.");
         }
     }
 
     Vector scale_vec(const Vector& v) const {
-        if(type_ == ScalingType::FULL) {
+        if(type_ == ScalingType::Full) {
             return scale_vector(v);
-        } else if (type_ == ScalingType::ROW) {
+        } else if (type_ == ScalingType::Row) {
             return scale_vector(v);
-        } else if (type_ == ScalingType::COL) {
-            throw std::runtime_error("Scaler: Error attempting to scale vector. Scaling type is 'COL'.");
+        } else if (type_ == ScalingType::Col) {
+            throw std::runtime_error("Scaler: Error attempting to scale vector. Scaling type is 'Col'.");
         } else {
-            throw std::runtime_error("Scaler: Error attempting to scale vector. Scaling type is 'NONE'.");
+            throw std::runtime_error("Scaler: Error attempting to scale vector. Scaling type is 'None'.");
         }
     }
 
     Vector unscale(const Vector& v) const {
-        if(type_ == ScalingType::FULL) {
+        if(type_ == ScalingType::Full) {
             return unscale_vector(v);
-        } else if (type_ == ScalingType::ROW) {
-            throw std::runtime_error("Scaler: Error attempting to unscale vector. Scaling type is 'ROW'.");
-        } else if (type_ == ScalingType::COL) {
+        } else if (type_ == ScalingType::Row) {
+            throw std::runtime_error("Scaler: Error attempting to unscale vector. Scaling type is 'Row'.");
+        } else if (type_ == ScalingType::Col) {
             return unscale_vector(v);
         } else {
-            throw std::runtime_error("Scaler: Error attempting to unscale vector. Scaling type is 'NONE'.");
+            throw std::runtime_error("Scaler: Error attempting to unscale vector. Scaling type is 'None'.");
         }
     }
 

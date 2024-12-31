@@ -22,10 +22,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <nanobind/eigen/dense.h>
 #include <nanobind/stl/string.h>
 
-// Eigen
-#include <Eigen/Core>
-#include <Eigen/Sparse>
-
 // Phasma
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"

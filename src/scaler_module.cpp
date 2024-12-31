@@ -21,14 +21,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 namespace nb = nanobind;
 namespace Phasma::bindings {
     void init_scaler_module(nb::module_& m) {
-        // Bind the ScalingType enum
-        nb::enum_<Phasma::ScalingType>(m, "ScalingType")
-            .value("NONE", Phasma::ScalingType::NONE)
-            .value("ROW", Phasma::ScalingType::ROW)
-            .value("COL", Phasma::ScalingType::COL)
-            .value("FULL", Phasma::ScalingType::FULL)
-            .export_values();
-
         // Bind Scaler for double and float
         Phasma::bindings::bind_scaler<double>(m, "Scaler");
         Phasma::bindings::bind_scaler<float>(m, "Scaler_f");

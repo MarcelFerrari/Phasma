@@ -25,11 +25,14 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // C++ Standard Library
 #include <string>
 
+// Eigen
+#include <Eigen/Core>
+
 // Phasma
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"
 
-// Eigen 3 built-in direct solvers
+// Eigen built-in direct solvers
 #include <Eigen/SparseLU>
 #include <Eigen/SparseQR>
 
@@ -49,7 +52,7 @@ using namespace nb::literals;
 
 namespace Phasma {
 
-template <typename Solver, typename Scalar, int Order = Eigen::ColMajor>
+template <typename Solver, typename Scalar, int Order = Phasma::ColMajor>
 class ScaledDirectSolver {
     /*
         Wrapper class for direct solvers that follow the Eigen 3 sparse solver API.
@@ -59,7 +62,7 @@ public:
     using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
     using Vector = Phasma::Vector<Scalar>;
 
-    ScaledDirectSolver(Phasma::ScalingType t = Phasma::ScalingType::NONE) : solver_(), scaler_(t) {};
+    ScaledDirectSolver(Phasma::ScalingType t = Phasma::ScalingType::None) : solver_(), scaler_(t) {};
 
     void analyze_pattern(const SparseMatrix& A) {
         solver_.analyzePattern(A);
@@ -74,7 +77,7 @@ public:
             analyze_pattern(A);
         }
 
-        if(scaler_.type() != Phasma::ScalingType::NONE) {
+        if(scaler_.type() != Phasma::ScalingType::None) {
             SparseMatrix A_scaled = scaler_.scale(A);
             solver_.factorize(A_scaled);
         } else {
@@ -100,7 +103,7 @@ public:
 
         Vector x;
         // Scale input vector and solve if necessary
-        if (scaler_.type() == Phasma::ScalingType::FULL || scaler_.type() == Phasma::ScalingType::ROW) {
+        if (scaler_.type() == Phasma::ScalingType::Full || scaler_.type() == Phasma::ScalingType::Row) {
             Vector b_scaled = scaler_.scale(b);
             x = solver_.solve(b_scaled);
         } else {
@@ -113,7 +116,7 @@ public:
         }
 
         // Unscale the solution if necessary
-        if (scaler_.type() == Phasma::ScalingType::FULL || scaler_.type() == Phasma::ScalingType::COL) {
+        if (scaler_.type() == Phasma::ScalingType::Full || scaler_.type() == Phasma::ScalingType::Col) {
             return scaler_.unscale(x);
         } else {
             return x;

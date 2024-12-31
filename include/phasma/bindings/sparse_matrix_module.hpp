@@ -22,8 +22,11 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <nanobind/eigen/dense.h>
 #include <nanobind/stl/string.h>
 
-#include <Eigen/Sparse>
+// Standard Library
 #include <string>
+
+// Eigen
+#include <Eigen/Core>
 
 // Phasma
 #include "phasma/types.hpp"
@@ -41,8 +44,8 @@ This is faster and easier to use than the Eigen triplet interface.
 
 template <typename Scalar>
 class ArrayTripletIterator {
-    using IndexArray = nb::DRef<Eigen::Array<Phasma::Index, Eigen::Dynamic, 1>>;
-    using ScalarArray = nb::DRef<Eigen::Array<Scalar, Eigen::Dynamic, 1>>;
+    using IndexArray = nb::DRef<Phasma::Array<Phasma::Index>>;
+    using ScalarArray = nb::DRef<Phasma::Array<Scalar>>;
 
     IndexArray rows_;
     IndexArray cols_;
@@ -186,10 +189,10 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         }, nb::is_operator())
 
         // SparseMatrix * DenseMatrix
-        .def("__mul__", [](const SparseMatrix &self, nb::DRef<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>> m) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
+        .def("__mul__", [](const SparseMatrix &self, nb::DRef<Phasma::Matrix<Scalar>> m) -> Phasma::Matrix<Scalar> {
             return self * m;
         }, nb::is_operator())
-        .def("__rmul__", [](const SparseMatrix &self, nb::DRef<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>> m) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
+        .def("__rmul__", [](const SparseMatrix &self, nb::DRef<Phasma::Matrix<Scalar>> m) -> Phasma::Matrix<Scalar> {
             return self * m;
         }, nb::is_operator())
 
@@ -199,7 +202,7 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         }, "other"_a, "Element-wise product of two sparse matrices.")
 
         // Sparse*Dense cwise product
-        .def("cwiseProduct", [](const SparseMatrix &self, nb::DRef<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>> m) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
+        .def("cwiseProduct", [](const SparseMatrix &self, nb::DRef<Phasma::Matrix<Scalar>> m) -> Phasma::Matrix<Scalar> {
             return self.cwiseProduct(m);
         }, "m"_a, "Element-wise product of a sparse matrix and a dense matrix.")
 
@@ -207,6 +210,7 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         .def("__neg__", [](const SparseMatrix &self) -> SparseMatrix {
             return -self;
         }, nb::is_operator())
+
         // -------- Division --------
         // SparseMatrix / Scalar
         .def("__truediv__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
@@ -218,29 +222,29 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         
         // ====================== Other operations ======================
         // Triangular solve
-        .def("triangular_solve", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const std::string & uplo) -> Phasma::Vector<Scalar> {
-            if (uplo == "U") {
-                return self.template triangularView<Eigen::Upper>().solve(b);
-            } else if (uplo == "L") {
-                return self.template triangularView<Eigen::Lower>().solve(b);
+        .def("triangular_solve", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
+            if (view == Phasma::Upper) {
+                return self.template triangularView<Phasma::Upper>().solve(b);
+            } else if (view == Phasma::Lower) {
+                return self.template triangularView<Phasma::Lower>().solve(b);
             } else {
-                throw std::invalid_argument("Invalid value for 'uplo'. Use 'U' or 'L'.");
+                throw std::invalid_argument("Invalid value for 'view'. Use 'Upper' or 'Lower'.");
             }
-        }, "b"_a, "lower"_a = true, "Solve the triangular system Ax = b.")
+        }, "b"_a, "view"_a, "Solve a triangular system of equations.")
 
-        .def("triangular_prod", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const std::string & uplo) -> Phasma::Vector<Scalar> {
-            if (uplo == "U") {
-                return self.template triangularView<Eigen::Upper>()*b;
-            } else if (uplo == "L") {
-                return self.template triangularView<Eigen::Lower>()*b;
-            } else if (uplo == "SU") {
-                return self.template triangularView<Eigen::StrictlyUpper>()*b;
-            } else if (uplo == "SL") {
-                return self.template triangularView<Eigen::StrictlyLower>()*b;
+        .def("triangular_prod", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
+            if (view == Phasma::Upper) {
+                return self.template triangularView<Phasma::Upper>()*b;
+            } else if (view == Phasma::Lower) {
+                return self.template triangularView<Phasma::Lower>()*b;
+            } else if (view == Phasma::StrictlyUpper) {
+                return self.template triangularView<Phasma::StrictlyUpper>()*b;
+            } else if (view == Phasma::StrictlyLower) {
+                return self.template triangularView<Phasma::StrictlyLower>()*b;
             } else {
-                throw std::invalid_argument("Invalid value for 'uplo'. Use 'U', 'L', 'SU' or 'SL'.");
+                throw std::invalid_argument("Invalid value for 'view'. Use 'Upper', 'Lower', 'StrictlyUpper' or 'StrictlyLower'.");
             }
-        }, "b"_a, "lower"_a = true, "Multiply the triangular matrix by a vector.")
+        }, "b"_a, "view"_a, "Perform a triangular matrix-vector product.")
 ;}
 
 } // namespace Phasma

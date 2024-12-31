@@ -58,7 +58,7 @@ void bind_direct_solver(nb::module_& m, const std::string& class_name) {
     using Vector = typename ScaledDirectSolver::Vector;
 
     nb::class_<ScaledDirectSolver>(m, class_name.c_str())
-        .def(nb::init<Phasma::ScalingType>(), "type"_a = Phasma::ScalingType::NONE, "Create a DirectSolver object with the given scaling type.")
+        .def(nb::init<Phasma::ScalingType>(), "type"_a = Phasma::ScalingType::None, "Create a DirectSolver object with the given scaling type.")
         .def("analyze_pattern", &ScaledDirectSolver::analyze_pattern, "A"_a, "Analyze the sparsity pattern of the matrix A.")
         .def("factorize", &ScaledDirectSolver::factorize, "A"_a, "Factorize the matrix A.")
         .def("compute", &ScaledDirectSolver::compute, "A"_a, "Analyze the sparsity pattern and factorize the matrix A.")
