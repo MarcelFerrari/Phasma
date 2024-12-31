@@ -32,10 +32,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"
 
-
 namespace Phasma {
 
-template <typename Solver, typename Scalar, int Order = Phasma::ColMajor>
+template <typename DirectSolver, typename Scalar, int Order = Phasma::ColMajor>
 class ScaledDirectSolver {
     /*
         Wrapper class for direct solvers that follow the Eigen 3 sparse solver API.
@@ -112,7 +111,7 @@ public:
     }
 
 private:
-    Solver solver_;
+    DirectSolver solver_;
     Phasma::Scaler<Scalar> scaler_;
     bool pattern_analyzed_ = false;
     bool factorized_ = false;    
