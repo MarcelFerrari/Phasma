@@ -51,7 +51,7 @@ void bind_iterative_solver(nb::module_& m, const std::string& class_name) {
         .def("iterations", &ScaledIterativeSolver::iterations, "Get the number of iterations performed in the last solve.")
         .def("compute", &ScaledIterativeSolver::compute, "A"_a, "Initialize the solver with the matrix A.")
         .def("solve", &ScaledIterativeSolver::solve, "b"_a, "Solve the linear system Ax = b.")
-        .def("compute_and_solve", &ScaledIterativeSolver::compute_and_solve, "A"_a, "b"_a, "Initialize the solver with A and solve Ax = b.");
+        .def("solve", &ScaledIterativeSolver::compute_and_solve, "A"_a, "b"_a, "Initialize the solver with A and solve Ax = b.");
 }
 
 } // namespace Phasma::bindings

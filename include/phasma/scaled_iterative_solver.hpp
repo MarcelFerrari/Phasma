@@ -22,6 +22,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <Eigen/Sparse>
 #include <Eigen/OrderingMethods>
 
+// Standard Lib
+#include <optional>
+
 // Phasma
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"
@@ -67,8 +70,8 @@ public:
 
     void compute(const SparseMatrix& A) {
         if (scaler_.type() != Phasma::ScalingType::None) {
-            SparseMatrix A_scaled = scaler_.scale(A);
-            solver_.compute(A_scaled);
+            A_scaled_ = scaler_.scale(A);
+            solver_.compute(*A_scaled_);
         } else {
             solver_.compute(A);
         }
@@ -115,6 +118,10 @@ public:
 private:
     IterativeSolver solver_;
     Phasma::Scaler<Scalar> scaler_;
+    std::optional<SparseMatrix> A_scaled_; // We need to store the scaled matrix here.
+                                           // Direct solvers do not require this as they factorize the matrix right away.
+                                           // However, iterative solvers need to store the scaled matrix to solve the system.
+                                           // Note: this is not necessary for non-scaled matrices as the matrix reference is kept alive by the caller.
     bool matrix_initialized_ = false;
     const bool check_convergence_;
 };
