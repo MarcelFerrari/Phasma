@@ -272,3 +272,7 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,c++,cmake,linux,macos
+
+# Pytest cache
+.pytest_cache/
+
