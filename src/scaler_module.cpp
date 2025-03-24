@@ -22,7 +22,8 @@ namespace nb = nanobind;
 namespace Phasma::bindings {
     void init_scaler_module(nb::module_& m) {
         // Bind Scaler for double and float
-        Phasma::bindings::bind_scaler<double>(m, "Scaler");
-        Phasma::bindings::bind_scaler<float>(m, "Scaler_f");
+        Phasma::bindings::bind_scaler<double>(m, "MatrixScaler");
+        Phasma::bindings::bind_scaler<float>(m, "MatrixScaler_f");
+        Phasma::bindings::bind_scaler<Phasma::float128>(m, "MatrixScaler_ld");
     }
 } // namespace Phasma::bindings

@@ -47,24 +47,30 @@ void init_direct_solver_module(nb::module_& m) {
     // Initialize Eigen 3 direct solvers
     // Most use ColMajor format so we create a convenient alias
     using SparseMatrix = Phasma::SparseMatrix<double>;
+    using SparseMatrix_f = Phasma::SparseMatrix<float>;
+    using SparseMatrix_ld = Phasma::SparseMatrix<Phasma::float128>;
 
     // SparseLU
-    Phasma::bindings::bind_direct_solver<Eigen::SparseLU<SparseMatrix>, double>(m, "SparseLU");
-
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::SparseLU<SparseMatrix>, double>(m, "Eigen_SparseLU");
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::SparseLU<SparseMatrix_f>, float>(m, "Eigen_SparseLU_f");
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::SparseLU<SparseMatrix_ld>, Phasma::float128>(m, "Eigen_SparseLU_ld");
+    
     // SparseQR
-    Phasma::bindings::bind_direct_solver<Eigen::SparseQR<SparseMatrix, Eigen::COLAMDOrdering<Phasma::Index>>, double>(m, "SparseQR");
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::SparseQR<SparseMatrix, Eigen::COLAMDOrdering<Phasma::Index>>, double>(m,"Eigen_SparseQR");
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::SparseQR<SparseMatrix_f, Eigen::COLAMDOrdering<Phasma::Index>>, float>(m,"Eigen_SparseQR_f");
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::SparseQR<SparseMatrix_ld, Eigen::COLAMDOrdering<Phasma::Index>>, Phasma::float128>(m,"Eigen_SparseQR_ld");
     
     // PardisoLU
     #ifdef PHASMA_PARDISO_SUPPORT
     #pragma message("Pardiso support is enabled.")
-    Phasma::bindings::bind_direct_solver<Eigen::PardisoLU<SparseMatrix>, double>(m, "PardisoLU");
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::PardisoLU<SparseMatrix>, double>(m, "PARDISO_LU");
     #endif
 
     // SuiteSparse
     #ifdef PHASMA_SUITESPARSE_SUPPORT
     #pragma message("SuiteSparse support is enabled.")
-    Phasma::bindings::bind_direct_solver<Eigen::UmfPackLU<SparseMatrix>, double>(m, "UmfPackLU");
-    Phasma::bindings::bind_direct_solver<Eigen::KLU<SparseMatrix>, double>(m, "KLU");
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::UmfPackLU<SparseMatrix>, double>(m, "UmfPack_LU");
+    Phasma::bindings::bind_eigen_direct_solver<Eigen::KLU<SparseMatrix>, double>(m, "KLU");
     #endif
 }
 } // namespace Phasma::bindings

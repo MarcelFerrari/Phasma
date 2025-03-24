@@ -30,5 +30,7 @@ void init_sparse_matrix_module(nb::module_ & m){
     Phasma::bindings::bind_sparse_matrix<double, Phasma::RowMajor>(m, "CRSMatrix");
     Phasma::bindings::bind_sparse_matrix<float,  Phasma::ColMajor>(m, "CCSMatrix_f");
     Phasma::bindings::bind_sparse_matrix<float,  Phasma::RowMajor>(m, "CRSMatrix_f");
+    Phasma::bindings::bind_sparse_matrix<Phasma::float128,  Phasma::ColMajor>(m, "CCSMatrix_ld");
+    Phasma::bindings::bind_sparse_matrix<Phasma::float128,  Phasma::RowMajor>(m, "CRSMatrix_ld");
 }
 } // namespace Phasma::bindings

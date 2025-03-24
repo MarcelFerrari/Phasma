@@ -31,8 +31,14 @@ NB_MODULE(phasma, m) {
     Phasma::bindings::init_scaler_module(m);
 
     // Initialize direct solvers module
-    Phasma::bindings::init_direct_solver_module(m);
+    auto m_direct = m.def_submodule("direct");
+    Phasma::bindings::init_direct_solver_module(m_direct);
 
     // Initialize iterative solvers module
-    Phasma::bindings::init_iterative_solver_module(m);
+    auto m_iterative = m.def_submodule("iterative");
+    Phasma::bindings::init_iterative_solver_module(m_iterative);
+
+    // Initialize matrix-free solvers module
+    auto m_matfree = m.def_submodule("matfree");
+    Phasma::bindings::init_matfree_solver_module(m_matfree);
 }

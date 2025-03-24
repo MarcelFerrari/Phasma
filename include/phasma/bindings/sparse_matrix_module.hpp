@@ -79,12 +79,20 @@ template <typename Scalar, int Order>
 void set_from_coo_arrays(Phasma::SparseMatrix<Scalar, Order> &mat,
                         nb::DRef<Phasma::Array<Phasma::Index>> idx_i,
                         nb::DRef<Phasma::Array<Phasma::Index>> idx_j,
-                        nb::DRef<Phasma::Array<Scalar>> values){
+                        nb::DRef<Phasma::Array<Scalar>> values,
+                        Phasma::Index rows = Phasma::Index(0),
+                        Phasma::Index cols = Phasma::Index(0)) {
 
     // Determine matrix size
-    Phasma::Index rows = idx_i.maxCoeff() + 1;
-    Phasma::Index cols = idx_j.maxCoeff() + 1;
-
+    if (rows == 0 && cols == 0) {
+        // No size provided, determine from indices
+        rows = idx_i.maxCoeff() + 1;
+        cols = idx_j.maxCoeff() + 1;
+    } else if (rows != 0 && cols == 0) {
+        // Only rows provided, assume square matrix
+        cols = rows;
+    }
+    
     // Create ArrayTripletIterator object
     ArrayTripletIterator<Scalar> begin(idx_i, idx_j, values);
     ArrayTripletIterator<Scalar> end(idx_i, idx_j, values, values.rows());
@@ -97,11 +105,31 @@ void set_from_coo_arrays(Phasma::SparseMatrix<Scalar, Order> &mat,
 template <typename Scalar, int Order>
 void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
     using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
+    constexpr int OppositeOrder = (Order == Eigen::RowMajor) ? Eigen::ColMajor : Eigen::RowMajor;
+    using OppositeSparseMatrix = Phasma::SparseMatrix<Scalar, OppositeOrder>;
 
     nb::class_<SparseMatrix>(m, class_name.c_str())
         // Constructors
         .def(nb::init<>(), "Default constructor")
-        .def(nb::init<Phasma::Index, Phasma::Index>(), "rows"_a, "cols"_a)
+        .def("__init__",
+            [](SparseMatrix* t,
+               nb::DRef<Phasma::Array<Phasma::Index>> idx_i,
+               nb::DRef<Phasma::Array<Phasma::Index>> idx_j,
+               nb::DRef<Phasma::Array<Scalar>> values,
+               Phasma::Index rows = Phasma::Index(0),
+               Phasma::Index cols = Phasma::Index(0)) {
+                new (t) SparseMatrix();
+                set_from_coo_arrays<Scalar, Order>(*t, idx_i, idx_j, values, rows, cols);
+               }, "idx_i"_a, "idx_j"_a, "values"_a, "rows"_a = Phasma::Index(0), "cols"_a = Phasma::Index(0),
+               "Initialize matrix from arrays of triplets idx_i, idx_j, values in COO format.")
+
+         // Conversion initializer
+        .def("__init__",
+             [](SparseMatrix* t, const OppositeSparseMatrix& other) {
+                new (t) SparseMatrix();
+                *t = other;
+             },
+             "other"_a, "Initialize matrix by converting from an opposite storage order matrix.")
 
         // ====================== Properties ======================
         .def_prop_ro("rows", &SparseMatrix::rows, "Number of rows")
@@ -110,8 +138,8 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         .def_prop_ro("is_compressed", &SparseMatrix::isCompressed, "Check if the matrix is compressed")
 
         // ====================== Member functions ======================
-        .def("setFromTriplets", &set_from_coo_arrays<Scalar, Order>,
-             "idx_i"_a, "idx_j"_a, "values"_a,
+        .def("set_from_triplets", &set_from_coo_arrays<Scalar, Order>,
+             "idx_i"_a, "idx_j"_a, "values"_a, "rows"_a = Phasma::Index(0), "cols"_a = Phasma::Index(0),
              "Set the matrix from arrays of triplets idx_i, idx_j, values in COO format.")
 
         // Operators
@@ -129,14 +157,14 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         }, nb::is_operator())
 
         // SparseMatrix + Scalar - Not implemented in Eigen yet
-        .def("__add__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
+        .def("__add__", [](const SparseMatrix &self, double s) -> SparseMatrix {
             SparseMatrix result = self; // Copy the matrix
             // Map the value array to a vector and add the scalar
             Eigen::Map<Phasma::Vector<Scalar>> v(result.valuePtr(), result.nonZeros());
             v += Phasma::Vector<Scalar>::Constant(result.nonZeros(), s);
             return result;
         }, nb::is_operator())
-        .def("__radd__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
+        .def("__radd__", [](const SparseMatrix &self, double s) -> SparseMatrix {
             SparseMatrix result = self; // Copy the matrix
             // Map the value array to a vector and add the scalar
             Eigen::Map<Phasma::Vector<Scalar>> v(result.valuePtr(), result.nonZeros());
@@ -151,14 +179,14 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
         }, nb::is_operator())
 
         // SparseMatrix - Scalar
-        .def("__sub__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
+        .def("__sub__", [](const SparseMatrix &self, double s) -> SparseMatrix {
             SparseMatrix result = self; // Copy the matrix
             // Map the value array to a vector and subtract the scalar
             Eigen::Map<Phasma::Vector<Scalar>> v(result.valuePtr(), result.nonZeros());
             v -= Phasma::Vector<Scalar>::Constant(result.nonZeros(), s);
             return result;
         }, nb::is_operator())
-        .def("__rsub__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
+        .def("__rsub__", [](const SparseMatrix &self, double s) -> SparseMatrix {
             SparseMatrix result = self; // Copy the matrix
             // Map the value array to a vector and subtract the scalar
             Eigen::Map<Phasma::Vector<Scalar>> v(result.valuePtr(), result.nonZeros());
@@ -168,10 +196,10 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
 
         // -------- Multiplication --------
         // SparseMatrix * Scalar
-        .def("__mul__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
+        .def("__mul__", [](const SparseMatrix &self, double s) -> SparseMatrix {
             return self * s;
         }, nb::is_operator())
-        .def("__rmul__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
+        .def("__rmul__", [](const SparseMatrix &self, double s) -> SparseMatrix {
             return self * s;
         }, nb::is_operator())
 
@@ -213,38 +241,55 @@ void bind_sparse_matrix(nb::module_ &m, const std::string &class_name) {
 
         // -------- Division --------
         // SparseMatrix / Scalar
-        .def("__truediv__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
+        .def("__truediv__", [](const SparseMatrix &self, double s) -> SparseMatrix {
             return self / s;
         }, nb::is_operator())
-        .def("__rtruediv__", [](const SparseMatrix &self, Scalar s) -> SparseMatrix {
+        .def("__rtruediv__", [](const SparseMatrix &self, double s) -> SparseMatrix {
             return self / s;
         }, nb::is_operator())
         
         // ====================== Other operations ======================
-        // // Triangular solve
-        // .def("triangular_solve", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
-        //     if (view == Phasma::Upper) {
-        //         return self.template triangularView<Phasma::Upper>().solve(b);
-        //     } else if (view == Phasma::Lower) {
-        //         return self.template triangularView<Phasma::Lower>().solve(b);
-        //     } else {
-        //         throw std::invalid_argument("Invalid value for 'view'. Use 'Upper' or 'Lower'.");
-        //     }
-        // }, "b"_a, "view"_a, "Solve a triangular system of equations.")
+        .def("diag", [](const SparseMatrix &self) -> Phasma::Vector<Scalar> {
+            return self.diagonal();
+        }, "Get the diagonal of the matrix.")
 
-        // .def("triangular_prod", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
-        //     if (view == Phasma::Upper) {
-        //         return self.template triangularView<Phasma::Upper>()*b;
-        //     } else if (view == Phasma::Lower) {
-        //         return self.template triangularView<Phasma::Lower>()*b;
-        //     } else if (view == Phasma::StrictlyUpper) {
-        //         return self.template triangularView<Phasma::StrictlyUpper>()*b;
-        //     } else if (view == Phasma::StrictlyLower) {
-        //         return self.template triangularView<Phasma::StrictlyLower>()*b;
-        //     } else {
-        //         throw std::invalid_argument("Invalid value for 'view'. Use 'Upper', 'Lower', 'StrictlyUpper' or 'StrictlyLower'.");
-        //     }
-        // }, "b"_a, "view"_a, "Perform a triangular matrix-vector product.")
+        .def("transpose", [](const SparseMatrix &self) -> SparseMatrix {
+            return self.transpose();
+        }, "Transpose the matrix.")
+
+        .def("T_prod", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> v) -> Phasma::Vector<Scalar> {
+            return self.transpose() * v;
+        }, "v"_a, "Perform the transpose matrix-vector product.")
+
+        // Triangular solve
+        .def("triangular_solve", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
+            if (view == Phasma::Upper) {
+                return self.template triangularView<Phasma::Upper>().solve(b);
+            } else if (view == Phasma::Lower) {
+                return self.template triangularView<Phasma::Lower>().solve(b);
+            } else {
+                throw std::invalid_argument("Invalid value for 'view'. Use 'Upper' or 'Lower'.");
+            }
+        }, "b"_a, "view"_a, "Solve a triangular system of equations.")
+
+        .def("triangular_prod", [](const SparseMatrix &self, nb::DRef<Phasma::Vector<Scalar>> b, const Phasma::View& view) -> Phasma::Vector<Scalar> {
+            if (view == Phasma::Upper) {
+                return self.template triangularView<Phasma::Upper>()*b;
+            } else if (view == Phasma::Lower) {
+                return self.template triangularView<Phasma::Lower>()*b;
+            } else if (view == Phasma::StrictlyUpper) {
+                return self.template triangularView<Phasma::StrictlyUpper>()*b;
+            } else if (view == Phasma::StrictlyLower) {
+                return self.template triangularView<Phasma::StrictlyLower>()*b;
+            } else {
+                throw std::invalid_argument("Invalid value for 'view'. Use 'Upper', 'Lower', 'StrictlyUpper' or 'StrictlyLower'.");
+            }
+        }, "b"_a, "view"_a, "Perform a triangular matrix-vector product.")
+
+        // To dense
+        .def("dense", [](const SparseMatrix &self) -> Phasma::Matrix<Scalar> {
+            return Phasma::Matrix<Scalar>(self);
+        }, "Convert the sparse matrix to a dense matrix.")
 ;}
 
 } // namespace Phasma

@@ -2,7 +2,7 @@
 Phasma: fast sparse linear algebra for Python.
 https://github.com/MarcelFerrari/phasma
 
-File: scaled_iterative_solver.hpp
+File: eigen_iterative_solver_wrapper.hpp
 Description: Wrapper that exposes bindings for iterative solver classes following
 the Eigen 3 sparse solver API. This class handles matrix scaling automatically.
 
@@ -22,7 +22,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <Eigen/Sparse>
 #include <Eigen/OrderingMethods>
 
-// Standard Lib
+// Standard lib
 #include <optional>
 
 // Phasma
@@ -32,7 +32,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 namespace Phasma {
 
 template <typename IterativeSolver, typename Scalar, int Order = Phasma::RowMajor>
-class ScaledIterativeSolver {
+class EigenIterativeSolverWrapper {
     /*
         Wrapper class for iterative solvers that follow the Eigen 3 sparse solver API.
         This class handles matrix scaling and iterative solver parameters.
@@ -41,7 +41,7 @@ public:
     using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
     using Vector = Phasma::Vector<Scalar>;
 
-    ScaledIterativeSolver(Phasma::ScalingType t = Phasma::ScalingType::None,
+    EigenIterativeSolverWrapper(Phasma::ScalingType t = Phasma::ScalingType::None,
                           bool check_convergence = false)
     : solver_(),
       scaler_(t), 

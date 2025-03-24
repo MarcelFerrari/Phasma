@@ -17,8 +17,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set the default build type to optimized release if not specified
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  # Enable maximum optimization for all compilers
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(EXTRA_OPT_FLAGS "-march=native -mtune=native")
+  endif()
+  
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${EXTRA_OPT_FLAGS}")
 endif()
 
 # Set the installation folder to "lib" within the source directory

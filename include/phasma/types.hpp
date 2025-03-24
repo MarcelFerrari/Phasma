@@ -29,6 +29,7 @@ namespace Phasma {
     using Index = int;
 #endif
 
+using float128 = long double;
 
 // Enum classes for Phasma types
 enum Order {

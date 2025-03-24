@@ -26,7 +26,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // Phasma
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"
-#include "phasma/scaled_direct_solver.hpp"
+#include "phasma/direct_solvers/direct_solver_wrapper.hpp"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -34,18 +34,18 @@ using namespace nb::literals;
 namespace Phasma::bindings {
 
 template <typename Solver, typename Scalar, int Order = Eigen::ColMajor>
-void bind_direct_solver(nb::module_& m, const std::string& class_name) {
-    using ScaledDirectSolver = Phasma::ScaledDirectSolver<Solver, Scalar, Order>;
-    using SparseMatrix = typename ScaledDirectSolver::SparseMatrix;
-    using Vector = typename ScaledDirectSolver::Vector;
+void bind_eigen_direct_solver(nb::module_& m, const std::string& class_name) {
+    using DirectSolverWrapper = Phasma::DirectSolverWrapper<Solver, Scalar, Order>;
+    using SparseMatrix = typename DirectSolverWrapper::SparseMatrix;
+    using Vector = typename DirectSolverWrapper::Vector;
 
-    nb::class_<ScaledDirectSolver>(m, class_name.c_str())
+    nb::class_<DirectSolverWrapper>(m, class_name.c_str())
         .def(nb::init<Phasma::ScalingType>(), "type"_a = Phasma::ScalingType::None, "Create a DirectSolver object with the given scaling type.")
-        .def("analyze_pattern", &ScaledDirectSolver::analyze_pattern, "A"_a, "Analyze the sparsity pattern of the matrix A.")
-        .def("factorize", &ScaledDirectSolver::factorize, "A"_a, "Factorize the matrix A.")
-        .def("compute", &ScaledDirectSolver::compute, "A"_a, "Analyze the sparsity pattern and factorize the matrix A.")
-        .def("solve", &ScaledDirectSolver::solve, "b"_a, "Solve the linear system Ax = b.")
-        .def("solve", &ScaledDirectSolver::factorize_and_solve, "A"_a, "b"_a, "Factorize the matrix A and solve the linear system Ax = b.");
+        .def("analyze_pattern", &DirectSolverWrapper::analyze_pattern, "A"_a, "Analyze the sparsity pattern of the matrix A.")
+        .def("factorize", &DirectSolverWrapper::factorize, "A"_a, "Factorize the matrix A.")
+        .def("compute", &DirectSolverWrapper::compute, "A"_a, "Analyze the sparsity pattern and factorize the matrix A.")
+        .def("solve", &DirectSolverWrapper::solve, "b"_a, "Solve the linear system Ax = b.")
+        .def("solve", &DirectSolverWrapper::factorize_and_solve, "A"_a, "b"_a, "Factorize the matrix A and solve the linear system Ax = b.");
 }
 
 } // namespace Phasma::bindings

@@ -35,7 +35,7 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 namespace Phasma {
 
 template <typename DirectSolver, typename Scalar, int Order = Phasma::ColMajor>
-class ScaledDirectSolver {
+class DirectSolverWrapper {
     /*
         Wrapper class for direct solvers that follow the Eigen 3 sparse solver API.
         This class handles matrix scaling without having to reimplement it for each solver.
@@ -44,7 +44,7 @@ public:
     using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
     using Vector = Phasma::Vector<Scalar>;
 
-    ScaledDirectSolver(Phasma::ScalingType t = Phasma::ScalingType::None) : solver_(), scaler_(t) {};
+    DirectSolverWrapper(Phasma::ScalingType t = Phasma::ScalingType::None) : solver_(), scaler_(t) {};
 
     void analyze_pattern(const SparseMatrix& A) {
         solver_.analyzePattern(A);

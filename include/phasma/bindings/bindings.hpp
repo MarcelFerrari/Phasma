@@ -27,6 +27,7 @@ namespace Phasma::bindings {
     void init_scaler_module(nb::module_ &m);
     void init_direct_solver_module(nb::module_ &m);
     void init_iterative_solver_module(nb::module_ &m);
+    void init_matfree_solver_module(nb::module_ &m);
 }
 
 #endif // PHASMA_BINDINGS_HPP

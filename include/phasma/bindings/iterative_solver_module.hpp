@@ -20,6 +20,10 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #include <nanobind/nanobind.h>
 #include <nanobind/eigen/dense.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/function.h>
+
+// C++ Standard Library
+#include <functional>
 
 // Eigen
 #include <Eigen/Core>
@@ -29,7 +33,9 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 // Phasma
 #include "phasma/types.hpp"
 #include "phasma/scaler.hpp"
-#include "phasma/scaled_iterative_solver.hpp"
+#include "phasma/iterative_solvers/eigen_matrix_free_operator.hpp"
+#include "phasma/iterative_solvers/eigen_iterative_solver_wrapper.hpp"
+
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -37,22 +43,65 @@ using namespace nb::literals;
 namespace Phasma::bindings {
 
 template <typename Solver, typename Scalar, int Order = Phasma::RowMajor>
-void bind_iterative_solver(nb::module_& m, const std::string& class_name) {
-    using ScaledIterativeSolver = Phasma::ScaledIterativeSolver<Solver, Scalar, Order>;
-    using SparseMatrix = typename ScaledIterativeSolver::SparseMatrix;
-    using Vector = typename ScaledIterativeSolver::Vector;
+void bind_eigen_iterative_solver(nb::module_& m, const std::string& class_name) {
+    using EigenIterativeSolverWrapper = Phasma::EigenIterativeSolverWrapper<Solver, Scalar, Order>;
+    using SparseMatrix = typename EigenIterativeSolverWrapper::SparseMatrix;
+    using Vector = typename EigenIterativeSolverWrapper::Vector;
 
-    nb::class_<ScaledIterativeSolver>(m, class_name.c_str())
+    nb::class_<Solver>(m, class_name.c_str())
         .def(nb::init<Phasma::ScalingType, bool>(), "type"_a = Phasma::ScalingType::None, "check_convergence"_a = false, "Create an IterativeSolver object with the given scaling type.")
-        .def("set_tolerance", &ScaledIterativeSolver::set_tolerance, "tol"_a, "Set the tolerance for the iterative solver.")
-        .def("set_max_iterations", &ScaledIterativeSolver::set_max_iterations, "max_iter"_a, "Set the maximum number of iterations.")
-        .def("tolerance", &ScaledIterativeSolver::tolerance, "Get the tolerance of the solver.")
-        .def("max_iterations", &ScaledIterativeSolver::max_iterations, "Get the maximum number of iterations allowed.")
-        .def("iterations", &ScaledIterativeSolver::iterations, "Get the number of iterations performed in the last solve.")
-        .def("compute", &ScaledIterativeSolver::compute, "A"_a, "Initialize the solver with the matrix A.")
-        .def("solve", &ScaledIterativeSolver::solve, "b"_a, "Solve the linear system Ax = b.")
-        .def("solve", &ScaledIterativeSolver::compute_and_solve, "A"_a, "b"_a, "Initialize the solver with A and solve Ax = b.");
-}
+        .def("set_tolerance", &EigenIterativeSolverWrapper::set_tolerance, "tol"_a, "Set the tolerance for the iterative solver.")
+        .def("set_max_iterations", &EigenIterativeSolverWrapper::set_max_iterations, "max_iter"_a, "Set the maximum number of iterations.")
+        .def("tolerance", &EigenIterativeSolverWrapper::tolerance, "Get the tolerance of the solver.")
+        .def("max_iterations", &EigenIterativeSolverWrapper::max_iterations, "Get the maximum number of iterations allowed.")
+        .def("iterations", &EigenIterativeSolverWrapper::iterations, "Get the number of iterations performed in the last solve.")
+        .def("compute", &EigenIterativeSolverWrapper::compute, "A"_a, "Initialize the solver with the matrix A.")
+        .def("solve", &EigenIterativeSolverWrapper::solve, "b"_a, "Solve the linear system Ax = b.")
+        .def("solve", &EigenIterativeSolverWrapper::solve_with_guess, "b"_a, "guess"_a, "Solve the linear system Ax = b with an initial guess.")
+        .def("solve", &EigenIterativeSolverWrapper::compute_and_solve, "A"_a, "b"_a, "Initialize the solver with A and solve Ax = b.")
+        .def("solve", &EigenIterativeSolverWrapper::compute_and_solve_with_guess, "A"_a, "b"_a, "guess"_a, "Initialize the solver with A and solve Ax = b with an initial guess.")
+;}
+
+
+template <typename Solver, typename Scalar>
+void bind_eigen_matfree_solver(nb::module_& m, const std::string& class_name) {
+    using Vector = Phasma::Vector<Scalar>;
+    using MatrixReplacement = Phasma::EigenSupport::MatrixReplacement<Scalar>;
+    using MatrixOp = typename MatrixReplacement::MatrixOp;
+
+    nb::class_<Solver>(m, class_name.c_str())
+        .def(nb::init<>(), "Create an IterativeSolver object.")
+                .def("set_tolerance", [](Solver& solver, double tol) -> void {
+                solver.setTolerance(tol);
+            }, "tol"_a, "Set the tolerance for the iterative solver.")
+        .def("set_max_iterations", [](Solver& solver, int max_iter) -> void {
+                solver.setMaxIterations(max_iter);
+            }, "max_iter"_a, "Set the maximum number of iterations.")
+        .def("tolerance", [](Solver& solver) -> double {
+                return solver.tolerance();
+            }, "Get the tolerance of the solver.")
+        .def("max_iterations", [](Solver& solver) -> int {
+                return solver.maxIterations();
+            }, "Get the maximum number of iterations allowed.")
+        .def("iterations", [](Solver& solver) -> int {
+                return solver.iterations();
+            }, "Get the number of iterations performed in the last solve.")
+        .def("error", [](Solver& solver) -> double {
+                return solver.error();
+            }, "Get the error of the last solve.")
+        .def("solve", [](Solver& solver, const MatrixOp& op, int rows, int cols, const Eigen::Ref<const Vector>& rhs) -> Vector {
+            MatrixReplacement op_wrapper(op, rows, cols);
+            solver.compute(op_wrapper); 
+            return solver.solve(rhs); 
+        }, "f"_a, "rows"_a, "cols"_a, "rhs"_a, "Solve the linear system Ax = b.")
+        .def("solve", [](Solver& solver, const MatrixOp& op, int rows, int cols, const Eigen::Ref<const Vector>& rhs, const Eigen::Ref<const Vector>& guess) -> Vector {
+            MatrixReplacement op_wrapper(op, rows, cols);
+            solver.compute(op_wrapper); 
+            return solver.solveWithGuess(rhs, guess); 
+        }, "f"_a, "rows"_a, "cols"_a, "rhs"_a, "guess"_a, "Solve the linear system Ax = b with an initial guess.")
+;}
+
+
 
 } // namespace Phasma::bindings
 
