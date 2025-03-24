@@ -1,26 +1,30 @@
 # Phasma
 
-**Phasma** is a minimalistic Python library for fast sparse linear algebra, built on top of the Eigen C++ library. Designed for high performance and simplicity, Phasma exposes Eigen's sparse matrix classes and provides compatibility wrappers to integrate other software with Eigen Types, enabling seamless access from Python.
+**Phasma** is the high-performance C++ linear algebra backend of the [Pyroclast](https://github.com/MarcelFerrari/Pyroclast) Geophysics Solver. Built on top of the Eigen C++ library, Phasma exposes fast and efficient sparse matrix operations to Python through minimal, high-quality bindings.
+
+Designed specifically to support the demanding requirements of large-scale geodynamic simulations, Phasma is lightweight, modular, and focused on performance-critical sparse linear algebra tasks.
 
 ## Features
 
-- **Built on Eigen**: Access Eigen's mature and efficient sparse matrix classes directly from Python.
-- **Compatibility Wrappers**: Integrates with other software, exposing them to Eigen Types for streamlined workflows.
-- **Minimalistic Design**: Provides a small, well-optimized set of operations that emphasize performance best practices.
-- **Python Bindings**: Simplifies the use of advanced sparse linear algebra operations in Python.
+- **Backend for Pyroclast**: Phasma powers the sparse linear algebra computations in Pyroclast, enabling fast and scalable geophysical simulations.
+- **Built on Eigen**: Leverages Eigen’s mature and highly optimized sparse matrix solvers.
+- **Clean Python Bindings**: Exposes Eigen types and solvers to Python via a minimal interface.
+- **Compatibility Wrappers**: Allows integration of additional C++ solvers and modules using Eigen's data structures.
+- **Minimalistic Design**: Offers a lean set of operations that emphasize speed, clarity, and good performance practices.
 
 ## Philosophy
 
-Phasma prioritizes:
-- **Performance**: Every operation is optimized for speed and efficiency.
-- **Simplicity**: Avoids redundant methods, providing a single, fast way to perform each operation.
-- **Best Practices**: Encourages users to adapt to high-performance patterns by design.
+Phasma is built around the following principles:
+
+- **Performance First**: Every component is tuned for speed and efficient memory usage.
+- **Simplicity by Design**: A small, clear API that avoids unnecessary abstraction or duplication.
+- **Interoperability**: Facilitates clean integration between Python, C++, and other HPC components within the Pyroclast ecosystem.
 
 ## Building Phasma
 
-Building Phasma from source is straight forward:
+To build Phasma from source:
 
-```
+```bash
 git clone https://github.com/MarcelFerrari/Phasma.git
 cd Phasma
 mkdir build
@@ -28,49 +32,41 @@ cd build
 cmake ..
 make install
 ```
-This will compile the source code and generate a shared object file in `/lib`.
+
+This will compile the core C++ code and install the shared Python extension into `/lib`.
 
 ## Getting Started
 
-To import Phasma in your Python script, it will be sufficient to set your `$PYTHONPATH` environment variable to included Phasma's `/lib` folder. E.g.:
+To use Phasma in Python, add the `/lib` folder to your `$PYTHONPATH`:
 
-```
+```bash
 export PYTHONPATH=$PYTHONPATH:$(realpath Phasma/lib)
 ```
 
-Here's an example of how to use Phasma to solve a sparse linear system:
+### Example: Solving a Sparse Linear System
 
 ```python
 import numpy as np
 import phasma as ph
 
-# Assemble matrix in COO format
-# Numpy arrays:
-# i_idx = i indices
-# j_idx = j indices
-# vals = values
+# Assemble a sparse matrix in COO format
 i_idx, j_idx, vals = assemble_matrix()
 
-# Create CCS matrix
+# Convert to compressed column storage (CCS)
 A = ph.CCSMatrix(i_idx, j_idx, vals)
 
-# Perform LU factorization using Eigen's SparseLU
-# Use full column/row scaling as preconditioning strategy
+# Use Eigen's SparseLU solver
 solver = ph.SparseLU(ph.ScalingType.Full)
 solver.compute(A)
 
-# Solve sparse linear system
+# Solve Ax = b
 rhs = ...
 x = solver.solve(rhs)
 ```
 
 ## Documentation
 
-Coming soon
-
-## Copyright notice
-
-Copyright &copy; 2024 Marcel Ferrari
+Documentation is in progress and will be published soon.
 
 ## License
 
@@ -78,4 +74,4 @@ Phasma is licensed under the [Mozilla Public License 2.0](https://www.mozilla.or
 
 ## Acknowledgments
 
-Phasma is powered by the Eigen library and inspired by the need for fast, reliable sparse linear algebra in Python. We also thank the open-source community for providing tools and libraries that make projects like this possible.
+Phasma is built on the Eigen C++ library and is developed as part of the Pyroclast project. Special thanks to the open-source community for creating the tools that make this possible.
