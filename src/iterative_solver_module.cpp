@@ -32,7 +32,6 @@ file, You can obtain one at https://mozilla.org/MPL/2.0/.
 namespace nb = nanobind;
 namespace Phasma::bindings {
 
-template <typename Solver, typename Scalar, int Order = Phasma::RowMajor>
 void init_iterative_solver_module(nb::module_& m) {
     // Initialize iterative solvers
     // Most use RowMajor

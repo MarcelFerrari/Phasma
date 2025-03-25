@@ -40,7 +40,7 @@ void bind_eigen_direct_solver(nb::module_& m, const std::string& class_name) {
     using Vector = typename DirectSolverWrapper::Vector;
 
     nb::class_<DirectSolverWrapper>(m, class_name.c_str())
-        .def(nb::init<Phasma::ScalingType>(), "type"_a = Phasma::ScalingType::None, "Create a DirectSolver object with the given scaling type.")
+        .def(nb::init<Phasma::Scale>(), "type"_a = Phasma::Scale::Identity, "Create a DirectSolver object with the given scaling type.")
         .def("analyze_pattern", &DirectSolverWrapper::analyze_pattern, "A"_a, "Analyze the sparsity pattern of the matrix A.")
         .def("factorize", &DirectSolverWrapper::factorize, "A"_a, "Factorize the matrix A.")
         .def("compute", &DirectSolverWrapper::compute, "A"_a, "Analyze the sparsity pattern and factorize the matrix A.")

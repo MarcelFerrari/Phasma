@@ -56,7 +56,7 @@ i_idx, j_idx, vals = assemble_matrix()
 A = ph.CCSMatrix(i_idx, j_idx, vals)
 
 # Use Eigen's SparseLU solver
-solver = ph.SparseLU(ph.ScalingType.Full)
+solver = ph.SparseLU(ph.Scale.Full)
 solver.compute(A)
 
 # Solve Ax = b

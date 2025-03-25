@@ -48,8 +48,8 @@ void bind_eigen_iterative_solver(nb::module_& m, const std::string& class_name) 
     using SparseMatrix = typename EigenIterativeSolverWrapper::SparseMatrix;
     using Vector = typename EigenIterativeSolverWrapper::Vector;
 
-    nb::class_<Solver>(m, class_name.c_str())
-        .def(nb::init<Phasma::ScalingType, bool>(), "type"_a = Phasma::ScalingType::None, "check_convergence"_a = false, "Create an IterativeSolver object with the given scaling type.")
+    nb::class_<EigenIterativeSolverWrapper>(m, class_name.c_str())
+        .def(nb::init<Phasma::Scale, bool>(), "type"_a = Phasma::Scale::Identity, "check_convergence"_a = false, "Create an IterativeSolver object with the given scaling type.")
         .def("set_tolerance", &EigenIterativeSolverWrapper::set_tolerance, "tol"_a, "Set the tolerance for the iterative solver.")
         .def("set_max_iterations", &EigenIterativeSolverWrapper::set_max_iterations, "max_iter"_a, "Set the maximum number of iterations.")
         .def("tolerance", &EigenIterativeSolverWrapper::tolerance, "Get the tolerance of the solver.")

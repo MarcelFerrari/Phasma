@@ -44,8 +44,8 @@ enum View {
     StrictlyLower = Eigen::StrictlyLower
 };
 
-enum class ScalingType {
-    None,
+enum class Scale {
+    Identity,
     Row,
     Col,
     Full,

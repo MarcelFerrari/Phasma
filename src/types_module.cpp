@@ -25,12 +25,12 @@ namespace nb = nanobind;
 using namespace nb::literals;
 namespace Phasma::bindings {
 void init_types_module(nb::module_ & m){
-    // Bind the ScalingType enum
-    nb::enum_<Phasma::ScalingType>(m, "ScalingType")
-        .value("None", Phasma::ScalingType::None)
-        .value("Row", Phasma::ScalingType::Row)
-        .value("Col", Phasma::ScalingType::Col)
-        .value("Full", Phasma::ScalingType::Full)
+    // Bind the Scale enum
+    nb::enum_<Phasma::Scale>(m, "Scale")
+        .value("Identity", Phasma::Scale::Identity)
+        .value("Row", Phasma::Scale::Row)
+        .value("Col", Phasma::Scale::Col)
+        .value("Full", Phasma::Scale::Full)
         .export_values();
 
     nb::enum_<Phasma::Order>(m, "Order")

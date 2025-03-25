@@ -44,7 +44,7 @@ public:
     using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
     using Vector = Phasma::Vector<Scalar>;
 
-    DirectSolverWrapper(Phasma::ScalingType t = Phasma::ScalingType::None) : solver_(), scaler_(t) {};
+    DirectSolverWrapper(Phasma::Scale t = Phasma::Scale::Identity) : solver_(), scaler_(t) {};
 
     void analyze_pattern(const SparseMatrix& A) {
         solver_.analyzePattern(A);
@@ -59,7 +59,7 @@ public:
             analyze_pattern(A);
         }
 
-        if(scaler_.type() != Phasma::ScalingType::None) {
+        if(scaler_.type() != Phasma::Scale::Identity) {
             SparseMatrix A_scaled = scaler_.scale(A);
             solver_.factorize(A_scaled);
         } else {
@@ -85,7 +85,7 @@ public:
 
         Vector x;
         // Scale input vector and solve if necessary
-        if (scaler_.type() == Phasma::ScalingType::Full || scaler_.type() == Phasma::ScalingType::Row) {
+        if (scaler_.type() == Phasma::Scale::Full || scaler_.type() == Phasma::Scale::Row) {
             Vector b_scaled = scaler_.scale(b);
             x = solver_.solve(b_scaled);
         } else {
@@ -98,7 +98,7 @@ public:
         }
 
         // Unscale the solution if necessary
-        if (scaler_.type() == Phasma::ScalingType::Full || scaler_.type() == Phasma::ScalingType::Col) {
+        if (scaler_.type() == Phasma::Scale::Full || scaler_.type() == Phasma::Scale::Col) {
             return scaler_.unscale(x);
         } else {
             return x;

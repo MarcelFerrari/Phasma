@@ -31,18 +31,18 @@ public:
     using CRSMatrix = Phasma::SparseMatrix<Scalar, Phasma::RowMajor>;
     using Vector = Phasma::Vector<Scalar>;
 
-    Scaler(ScalingType t) : type_(t) {}
+    Scaler(Scale t) : type_(t) {}
      
-    const ScalingType & type() const { return type_; }
+    const Scale & type() const { return type_; }
 
     CCSMatrix scale_ccs(const CCSMatrix& A_ccs) {
-        if(type_ == ScalingType::Full) {
+        if(type_ == Scale::Full) {
             CRSMatrix A_crs = A_ccs;
             return scale_full_ccs(A_ccs, A_crs);
-        } else if (type_ == ScalingType::Row) {
+        } else if (type_ == Scale::Row) {
             CRSMatrix A_crs = A_ccs;
             return scale_row_ccs(A_ccs, A_crs);
-        } else if (type_ == ScalingType::Col) {
+        } else if (type_ == Scale::Col) {
             return scale_col_ccs(A_ccs);
         } else {
             throw std::runtime_error("Scaler: Error attempting to scale matrix. Scaling type is 'None'.");
@@ -50,12 +50,12 @@ public:
     }
 
     CRSMatrix scale_crs(const CRSMatrix& A_crs) {
-        if(type_ == ScalingType::Full) {
+        if(type_ == Scale::Full) {
             CCSMatrix A_ccs = A_crs;
             return scale_full_crs(A_ccs, A_crs);
-        } else if (type_ == ScalingType::Row) {
+        } else if (type_ == Scale::Row) {
             return scale_row_crs(A_crs);
-        } else if (type_ == ScalingType::Col) {
+        } else if (type_ == Scale::Col) {
             CCSMatrix A_ccs = A_crs;
             return scale_col_crs(A_ccs, A_crs);
         } else {
@@ -64,11 +64,11 @@ public:
     }
 
     Vector scale_vec(const Vector& v) const {
-        if(type_ == ScalingType::Full) {
+        if(type_ == Scale::Full) {
             return scale_vector(v);
-        } else if (type_ == ScalingType::Row) {
+        } else if (type_ == Scale::Row) {
             return scale_vector(v);
-        } else if (type_ == ScalingType::Col) {
+        } else if (type_ == Scale::Col) {
             throw std::runtime_error("Scaler: Error attempting to scale vector. Scaling type is 'Col'.");
         } else {
             throw std::runtime_error("Scaler: Error attempting to scale vector. Scaling type is 'None'.");
@@ -76,11 +76,11 @@ public:
     }
 
     Vector unscale(const Vector& v) const {
-        if(type_ == ScalingType::Full) {
+        if(type_ == Scale::Full) {
             return unscale_vector(v);
-        } else if (type_ == ScalingType::Row) {
+        } else if (type_ == Scale::Row) {
             throw std::runtime_error("Scaler: Error attempting to unscale vector. Scaling type is 'Row'.");
-        } else if (type_ == ScalingType::Col) {
+        } else if (type_ == Scale::Col) {
             return unscale_vector(v);
         } else {
             throw std::runtime_error("Scaler: Error attempting to unscale vector. Scaling type is 'None'.");
@@ -102,7 +102,7 @@ public:
     }
 
 private:
-    ScalingType type_;
+    Scale type_;
     std::optional<Vector> Dr_inv_; // Row scaling factors
     std::optional<Vector> Dc_inv_; // Column scaling factors
 

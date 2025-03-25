@@ -41,7 +41,7 @@ public:
     using SparseMatrix = Phasma::SparseMatrix<Scalar, Order>;
     using Vector = Phasma::Vector<Scalar>;
 
-    EigenIterativeSolverWrapper(Phasma::ScalingType t = Phasma::ScalingType::None,
+    EigenIterativeSolverWrapper(Phasma::Scale t = Phasma::Scale::Identity,
                           bool check_convergence = false)
     : solver_(),
       scaler_(t), 
@@ -69,7 +69,7 @@ public:
     }
 
     void compute(const SparseMatrix& A) {
-        if (scaler_.type() != Phasma::ScalingType::None) {
+        if (scaler_.type() != Phasma::Scale::Identity) {
             A_scaled_ = scaler_.scale(A);
             solver_.compute(*A_scaled_);
         } else {
@@ -90,7 +90,7 @@ public:
 
         Vector x;
         // Scale input vector and solve if necessary
-        if (scaler_.type() == Phasma::ScalingType::Full || scaler_.type() == Phasma::ScalingType::Row) {
+        if (scaler_.type() == Phasma::Scale::Full || scaler_.type() == Phasma::Scale::Row) {
             Vector b_scaled = scaler_.scale(b);
             x = solver_.solve(b_scaled);
         } else {
@@ -103,7 +103,34 @@ public:
         }
 
         // Unscale the solution if necessary
-        if (scaler_.type() == Phasma::ScalingType::Full || scaler_.type() == Phasma::ScalingType::Col) {
+        if (scaler_.type() == Phasma::Scale::Full || scaler_.type() == Phasma::Scale::Col) {
+            return scaler_.unscale(x);
+        } else {
+            return x;
+        }
+    }
+
+    Vector solve_with_guess(const Vector& b, const Vector& g) const {
+        if (!matrix_initialized_) {
+            throw std::runtime_error("IterativeSolver: Matrix has not been initialized.");
+        }
+
+        Vector x;
+        // Scale input vector and solve if necessary
+        if (scaler_.type() == Phasma::Scale::Full || scaler_.type() == Phasma::Scale::Row) {
+            Vector b_scaled = scaler_.scale(b);
+            x = solver_.solveWithGuess(b_scaled, g);
+        } else {
+            x = solver_.solveWithGuess(b, g);
+        }
+
+        // Check if the solver failed
+        if (check_convergence_ && solver_.info() != Eigen::Success) {
+            throw std::runtime_error("IterativeSolver: Solving failed.");
+        }
+
+        // Unscale the solution if necessary
+        if (scaler_.type() == Phasma::Scale::Full || scaler_.type() == Phasma::Scale::Col) {
             return scaler_.unscale(x);
         } else {
             return x;
@@ -113,6 +140,11 @@ public:
     Vector compute_and_solve(const SparseMatrix& A, const Vector& b) {
         compute(A);
         return solve(b);
+    }
+
+    Vector compute_and_solve_with_guess(const SparseMatrix& A, const Vector& b, const Vector& g) {
+        compute(A);
+        return solve_with_guess(b, g);
     }
 
 private:

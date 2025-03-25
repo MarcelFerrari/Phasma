@@ -39,7 +39,7 @@ void bind_scaler(nb::module_& m, const std::string& class_name) {
     using Vector = typename ScalerType::Vector;
 
     nb::class_<ScalerType>(m, class_name.c_str())
-        .def(nb::init<Phasma::ScalingType>(), "type"_a, "Create a Scaler object with the given scaling type.")
+        .def(nb::init<Phasma::Scale>(), "type"_a, "Create a Scaler object with the given scaling type.")
         .def("type", &ScalerType::type, "Get the scaling type of this Scaler object.")
         .def("scale", &ScalerType::scale_ccs, "A"_a, "Scale a CCS matrix.")
         .def("scale", &ScalerType::scale_crs, "A"_a, "Scale a CRS matrix.")
